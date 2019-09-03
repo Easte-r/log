@@ -1,0 +1,47 @@
+## gzip 前端打包需要做的部分
+配置vue.config.js
+```
+const CompressionWebpackPlugin = require('compression-webpack-plugin')
+const productionGzipExtensions = ['js', 'css']
+
+
+configureWebpack: {
+    plugins: [
+        new CompressionWebpackPlugin({
+            asset: '[path].gz[query]',
+            algorithm: 'gzip',
+            test: new RegExp('\\.(' + productionGzipExtensions.join('|') + ')$'),
+            threshold: 10240,
+            minRatio: 0.8
+        })
+    ]
+},
+// 配置后，在打包的时候会同时在打包目录生成相应gzip包。供后端渲染使用。
+```
+
+## nodejs 做服务端需要做的部分
+```
+var express = require('express');
+var compression = require('compression') // 引入
+var path = require('path')
+var app = express();
+app.use(compression()); // 使用
+
+app.use(express.static('bin'));
+
+app.get('/*', function (req, res) {
+    res.sendFile(path.join(__dirname + '/bin/index.html'))
+});
+
+var server = app.listen(4000, function () {
+    var host = server.address().address;
+    var port = server.address().port;
+
+    console.log('Example app listening at http://%s:%s', host, port);
+});
+
+```
+
+## 笔记
+ - 我自己使用nodejs试了下可行性，在实际操作上是与运维人员协作进行的部署，php后端有相依开关。
+ - 参考地址： https://segmentfault.com/a/1190000012571492?utm_source=tag-newest。
